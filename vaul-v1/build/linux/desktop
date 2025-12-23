@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=My Product
+Comment=A vaul-v1 application
+# The Exec line includes %u to pass the URL to the application
+Exec=/usr/local/bin/vaul-v1 %u
+Terminal=false
+Type=Application
+Icon=vaul-v1
+Categories=Utility;
+StartupWMClass=vaul-v1
+
+ 
