@@ -57,7 +57,7 @@ function App() {
   return (
     <div className="vaul-container">
       <header className="vaul-header">
-        <h1 className="vaul-title">VAUL</h1>
+        <img src="/logo-full.png" alt="VAUL" className="vaul-logo" />
         <p className="vaul-subtitle">Your terminal command vault</p>
       </header>
 
