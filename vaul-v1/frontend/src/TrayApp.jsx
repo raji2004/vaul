@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
-import { CommandService } from "../bindings/changeme"
+import { CommandService, WindowService, AppService } from "../bindings/changeme"
 import { Events } from "@wailsio/runtime"
 
 function TrayApp() {
   const [commands, setCommands] = useState([])
+  const [filteredCommands, setFilteredCommands] = useState([])
+  const [searchQuery, setSearchQuery] = useState('')
   const [copiedId, setCopiedId] = useState(null)
 
   // Load commands on mount and set up event listener
@@ -29,10 +31,23 @@ function TrayApp() {
     try {
       const cmds = await CommandService.GetCommands()
       setCommands(cmds || [])
+      setFilteredCommands(cmds || [])
     } catch (err) {
       console.error('Failed to load commands:', err)
     }
   }
+
+  // Filter commands based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredCommands(commands)
+    } else {
+      const filtered = commands.filter(cmd =>
+        cmd.content.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      setFilteredCommands(filtered)
+    }
+  }, [searchQuery, commands])
 
   const handleCopy = async (command) => {
     try {
@@ -44,19 +59,56 @@ function TrayApp() {
     }
   }
 
+  const handleOpenMainApp = async () => {
+    try {
+      await WindowService.OpenMainWindow()
+    } catch (err) {
+      console.error('Failed to open main app:', err)
+    }
+  }
+
+  const handleQuit = async () => {
+    try {
+      await AppService.Quit()
+    } catch (err) {
+      console.error('Failed to quit:', err)
+    }
+  }
+
   return (
     <div className="tray-container">
-      <div className="tray-header">
-        <img src="/logo-full.png" alt="VAUL" className="tray-logo" />
+      <div className="tray-header-row">
+        <img src="/logo-full.png" alt="VAUL" className="tray-logo-small" />
+        <button className="tray-open-app-btn" onClick={handleOpenMainApp}>
+          <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="9" y1="3" x2="9" y2="21"></line>
+          </svg>
+          <span>Open Vaul</span>
+        </button>
+      </div>
+
+      <div className="tray-search-container">
+        <svg className="tray-search-icon" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        <input
+          type="text"
+          className="tray-search-input"
+          placeholder="Search commands..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
       </div>
 
       <div className="tray-commands-list">
-        {commands.length === 0 ? (
+        {filteredCommands.length === 0 ? (
           <div className="tray-empty-state">
-            <p>No commands saved</p>
+            <p>{searchQuery ? 'No commands found' : 'No commands saved'}</p>
           </div>
         ) : (
-          commands.map((cmd) => (
+          filteredCommands.map((cmd) => (
             <div key={cmd.id} className="tray-command-item">
               <code className="tray-command-code" onClick={() => handleCopy(cmd)}>
                 {cmd.content}
@@ -81,6 +133,17 @@ function TrayApp() {
           ))
         )}
       </div>
+
+      <div className="tray-separator"></div>
+
+      <button className="tray-quit-btn" onClick={handleQuit}>
+        <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span>Quit Vaul</span>
+      </button>
     </div>
   )
 }

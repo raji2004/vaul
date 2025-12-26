@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/events"
 )
 
 // Wails uses Go's `embed` package to embed the frontend files into the binary.
@@ -32,6 +33,12 @@ func main() {
 	// Create the command service
 	commandService := NewCommandService()
 
+	// Create window service
+	windowService := NewWindowService()
+
+	// Create app service for quitting
+	appService := NewAppService()
+
 	// Create a new Wails application by providing the necessary options.
 	// Variables 'Name' and 'Description' are for application metadata.
 	// 'Assets' configures the asset server with the 'FS' variable pointing to the frontend files.
@@ -42,6 +49,8 @@ func main() {
 		Description: "VAUL is an open-source desktop application that helps developers store, organize, and quickly retrieve terminal commands.",
 		Services: []application.Service{
 			application.NewService(commandService),
+			application.NewService(windowService),
+			application.NewService(appService),
 		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
@@ -55,6 +64,9 @@ func main() {
 	commandService.SetUpdateCallback(func() {
 		app.Event.Emit("commands-updated", "updated")
 	})
+
+	// Set app reference for app service
+	appService.SetApp(app)
 
 	// Create the main window
 	mainWindow := app.Window.NewWithOptions(application.WebviewWindowOptions{
@@ -72,6 +84,16 @@ func main() {
 		MinHeight:        480,
 	})
 
+	// Handle window close - hide instead of close so it can be reopened from tray
+	// When user clicks X, hide the window instead of closing it
+	mainWindow.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent) {
+		mainWindow.Hide() // Hide the window instead of closing
+		e.Cancel()        // Prevent the window from being destroyed
+	})
+
+	// Set main window reference for window service
+	SetMainWindowRef(mainWindow)
+
 	// Create tray window (initially hidden)
 	// Min/Max height will be dynamically adjusted based on content
 	trayWindow := app.Window.NewWithOptions(application.WebviewWindowOptions{
@@ -86,6 +108,11 @@ func main() {
 		Frameless:        true,
 		AlwaysOnTop:      true,
 		Hidden:           true,
+		Mac: application.MacWindow{
+			Backdrop:                application.MacBackdropTranslucent,
+			InvisibleTitleBarHeight: 0,
+			TitleBar:                application.MacTitleBarHiddenInset,
+		},
 	})
 
 	// Create the system tray
@@ -102,16 +129,22 @@ func main() {
 	trayMenu := application.NewMenu()
 
 	// Menu items
-	trayMenu.Add("Show Commands").OnClick(func(ctx *application.Context) {
-		trayWindow.Show()
-		trayWindow.Focus()
+	trayMenu.Add("Open Vaul app").OnClick(func(ctx *application.Context) {
+		if mainWindow != nil {
+			if !mainWindow.IsVisible() {
+				mainWindow.Show()
+			}
+			mainWindow.Focus()
+		}
 	})
 
 	trayMenu.AddSeparator()
 
-	trayMenu.Add("Open Main Window").OnClick(func(ctx *application.Context) {
-		mainWindow.Show()
-		mainWindow.Focus()
+	trayMenu.Add("Show Commands").OnClick(func(ctx *application.Context) {
+		if trayWindow != nil {
+			trayWindow.Show()
+			trayWindow.Focus()
+		}
 	})
 
 	trayMenu.AddSeparator()
