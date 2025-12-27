@@ -288,8 +288,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🗺️ Roadmap
 
-- [ ] Search/filter functionality
+- [x] Search/filter functionality
 - [ ] Command categories/tags
+- [ ] Alias management from CLI
 - [ ] Command history and favorites
 - [ ] Import/export commands
 - [ ] Keyboard shortcuts
