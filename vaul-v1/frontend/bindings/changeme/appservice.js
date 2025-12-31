@@ -16,6 +16,15 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 import * as application$0 from "../github.com/wailsapp/wails/v3/pkg/application/models.js";
 
 /**
+ * CreateSymlink creates a symlink for the vaul command in the user's PATH
+ * Returns a message indicating success or failure
+ * @returns {$CancellablePromise<string>}
+ */
+export function CreateSymlink() {
+    return $Call.ByID(1206422185);
+}
+
+/**
  * Quit quits the application
  * @returns {$CancellablePromise<void>}
  */
