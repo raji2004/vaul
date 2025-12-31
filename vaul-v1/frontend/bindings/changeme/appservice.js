@@ -40,3 +40,12 @@ export function Quit() {
 export function SetApp(app) {
     return $Call.ByID(3487267257, app);
 }
+
+/**
+ * SymlinkExists checks if the vaul symlink already exists
+ * Returns true if the symlink exists and points to the current executable
+ * @returns {$CancellablePromise<boolean>}
+ */
+export function SymlinkExists() {
+    return $Call.ByID(1072975037);
+}

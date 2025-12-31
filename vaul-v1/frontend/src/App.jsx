@@ -21,17 +21,29 @@ function App() {
   const [showCreateCategoryModal, setShowCreateCategoryModal] = useState(false)
   const [symlinkMessage, setSymlinkMessage] = useState(null)
   const [isCreatingSymlink, setIsCreatingSymlink] = useState(false)
+  const [symlinkExists, setSymlinkExists] = useState(false)
   const [editingAlias, setEditingAlias] = useState({}) // Track which command's alias is being edited
 
   // Load commands on mount and set up event listener
   useEffect(() => {
     loadCommands()
+    checkSymlinkExists()
     
     // Listen for command update events
     Events.On('commands-updated', () => {
       loadCommands()
     })
   }, [])
+
+  const checkSymlinkExists = async () => {
+    try {
+      const exists = await AppService.SymlinkExists()
+      setSymlinkExists(exists)
+    } catch (err) {
+      console.error('Failed to check symlink:', err)
+      setSymlinkExists(false)
+    }
+  }
 
   const loadCommands = async () => {
     try {
@@ -164,6 +176,8 @@ function App() {
       const message = await AppService.CreateSymlink()
       setSymlinkMessage({ type: 'success', text: message })
       setTimeout(() => setSymlinkMessage(null), 10000) // Hide after 10 seconds
+      // Check if symlink was created successfully
+      await checkSymlinkExists()
     } catch (err) {
       setSymlinkMessage({ type: 'error', text: err.message || 'Failed to create symlink' })
     } finally {
@@ -222,6 +236,12 @@ function App() {
               placeholder="Enter a command and press Enter to save..."
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleSubmit(e)
+                }
+              }}
               autoFocus
             />
           </div>
@@ -390,17 +410,31 @@ function App() {
               }
             </span>
           )}
+          {commands.some(cmd => cmd.alias) && (
+            <div className="cli-hint">
+              <svg className="cli-hint-icon" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+              <span className="cli-hint-text">Use <code>vaul &lt;alias&gt;</code> in terminal to run commands</span>
+            </div>
+          )}
         </div>
-        <div className="footer-right">
-          <button
-            className="symlink-btn"
-            onClick={handleCreateSymlink}
-            disabled={isCreatingSymlink}
-            title="Create symlink so you can use 'vaul' command from anywhere"
-          >
-            {isCreatingSymlink ? 'Creating...' : '🔗 Setup CLI'}
-          </button>
-        </div>
+        {!symlinkExists && (
+          <div className="footer-right">
+            <button
+              className="symlink-btn"
+              onClick={handleCreateSymlink}
+              disabled={isCreatingSymlink}
+              title="Create symlink so you can use 'vaul' command from anywhere"
+            >
+              {isCreatingSymlink ? 'Creating...' : '🔗 Setup CLI'}
+            </button>
+          </div>
+        )}
         {symlinkMessage && (
           <div className={`symlink-message ${symlinkMessage.type || 'info'}`}>
             {symlinkMessage.text}

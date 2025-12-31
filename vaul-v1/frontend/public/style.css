@@ -61,7 +61,10 @@ body::before {
   width: 100%;
   max-width: 640px;
   padding: 0 24px;
-  overflow: visible;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* Main container */
@@ -69,9 +72,10 @@ body::before {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  overflow: visible;
   height: 100%;
-  min-height: 100vh;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* Header */
@@ -79,6 +83,8 @@ body::before {
   padding: 16px 0;
   border-bottom: 1px solid var(--glass-border);
   margin-bottom: 20px;
+  flex-shrink: 0;
+  /* Prevent header from shrinking */
 }
 
 .vaul-header-content {
@@ -191,11 +197,12 @@ body::before {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: calc(100vh - 320px);
   overflow-y: auto;
   overflow-x: hidden;
   padding: 8px 12px 8px 4px;
   flex: 1;
+  min-height: 0;
+  /* Important for flex scrolling */
 }
 
 .commands-list::-webkit-scrollbar {
@@ -475,6 +482,8 @@ body::before {
 /* Command input form */
 .command-input-form {
   margin-bottom: 0;
+  flex-shrink: 0;
+  /* Prevent form from shrinking */
 }
 
 .command-input-row {
@@ -493,6 +502,42 @@ body::before {
   flex: 0 0 140px;
 }
 
+.toggle-alias-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.toggle-alias-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.toggle-alias-btn:active {
+  transform: scale(0.95);
+}
+
+.toggle-alias-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: var(--text-secondary);
+  transition: stroke 0.2s ease;
+}
+
+.toggle-alias-btn:hover svg {
+  stroke: var(--text-primary);
+}
+
 
 /* Category Pills */
 .category-pills {
@@ -501,6 +546,8 @@ body::before {
   gap: 8px;
   padding: 12px 0;
   margin-bottom: 8px;
+  flex-shrink: 0;
+  /* Prevent category pills from shrinking */
 }
 
 .category-pill {
@@ -925,18 +972,44 @@ body::before {
   padding: 12px 0;
   border-top: 1px solid var(--glass-border);
   margin-top: auto;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr auto;
   gap: 8px;
+  align-items: start;
   position: relative;
+  flex-shrink: 0;
+  min-height: fit-content;
 }
 
-.footer-left,
-.footer-right {
+.footer-left {
+  grid-column: 1;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.footer-right {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+
+/* When footer-right is hidden, footer-left should span full width */
+.vaul-footer:not(:has(.footer-right)) {
+  grid-template-columns: 1fr;
+}
+
+.vaul-footer:not(:has(.footer-right)) .footer-left {
+  grid-column: 1 / -1;
+}
+
+.symlink-message {
+  grid-column: 1 / -1;
 }
 
 .command-count {
@@ -944,6 +1017,44 @@ body::before {
   color: var(--text-secondary);
   font-weight: 400;
   opacity: 0.7;
+}
+
+.cli-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(100, 220, 150, 0.08);
+  border: 1px solid rgba(100, 220, 150, 0.2);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  opacity: 0.9;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.cli-hint-icon {
+  width: 14px;
+  height: 14px;
+  stroke: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.cli-hint-text {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cli-hint code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  font-size: 10px;
+  color: var(--accent);
+  font-weight: 500;
 }
 
 .symlink-btn {

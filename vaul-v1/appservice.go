@@ -79,3 +79,61 @@ func (as *AppService) CreateSymlink() (string, error) {
 
 	return fmt.Sprintf("Symlink created successfully!\nYou can now use 'vaul' from anywhere.\nSymlink: %s -> %s\n\nMake sure %s is in your PATH.", symlinkPath, execPath, goBin), nil
 }
+
+// SymlinkExists checks if the vaul symlink already exists
+// Returns true if the symlink exists and points to the current executable
+func (as *AppService) SymlinkExists() (bool, error) {
+	// Get the current executable path
+	execPath, err := os.Executable()
+	if err != nil {
+		return false, fmt.Errorf("failed to get executable path: %v", err)
+	}
+
+	// Resolve symlinks to get the actual path
+	execPath, err = filepath.EvalSymlinks(execPath)
+	if err != nil {
+		return false, fmt.Errorf("failed to resolve executable path: %v", err)
+	}
+
+	// Get the absolute path
+	execPath, err = filepath.Abs(execPath)
+	if err != nil {
+		return false, fmt.Errorf("failed to get absolute path: %v", err)
+	}
+
+	// Check common locations for the symlink
+	locations := []string{
+		filepath.Join(os.Getenv("HOME"), "go", "bin", "vaul"),
+		"/usr/local/bin/vaul",
+	}
+
+	for _, symlinkPath := range locations {
+		// Check if symlink exists
+		linkInfo, err := os.Lstat(symlinkPath)
+		if err != nil {
+			continue // Symlink doesn't exist at this location
+		}
+
+		// Check if it's actually a symlink
+		if linkInfo.Mode()&os.ModeSymlink != 0 {
+			// Resolve the symlink target
+			target, err := os.Readlink(symlinkPath)
+			if err != nil {
+				continue
+			}
+
+			// Get absolute path of the target
+			absTarget, err := filepath.Abs(target)
+			if err != nil {
+				continue
+			}
+
+			// Check if it points to our executable
+			if absTarget == execPath {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
+}
